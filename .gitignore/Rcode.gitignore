@@ -1,0 +1,375 @@
+
+Parkinson’s data
+
+Train on 3000 data points
+Test on 2875 data points
+
+We’ll create a table for RMSE
+
+1)	Correlation
+2)	Interaction
+3)	As.factor(Subject)
+4)	Feature Selection
+5)	Lm on all variables RMSE
+6)	Stepwise
+7)	Logistic
+8)	Lasso
+9)	Ridge
+10)	Splines
+11)	Random Forest (Variable Importance Plot - to decide on variables)
+12)	Boosted Trees
+13)	SVM
+
+
+Response Variables:
+
+1)	Motor_UPDRS
+2)	Total_UPDRS
+
+
+
+Lm on all variables RMSE
+
+> fit_total=lm(total_UPDRS~.,Train_parkinsons)
+> mean(fit_total$residuals^2)
+[1] 5.125938
+
+> fit_motor=lm(motor_UPDRS~.,Train_parkinsons)
+> mean(fit_motor$residuals^2)
+[1] 3.367203
+
+Collinearity
+vif(fit_total)
+
+          age           sex     test_time   motor_UPDRS     Jitter...   Jitter.Abs. 
+ 1.424544e+00  1.437441e+00  1.042519e+00  1.364590e+00  7.730547e+01  9.940026e+00 
+   Jitter.RAP   Jitter.PPQ5    Jitter.DDP       Shimmer   Shimmer.dB.  Shimmer.APQ3 
+ 8.663125e+05  3.229243e+01  8.665433e+05  1.977408e+02  4.679979e+01  1.557250e+07 
+ Shimmer.APQ5 Shimmer.APQ11   Shimmer.DDA           NHR           HNR          RPDE 
+ 6.231197e+01  3.082707e+01  1.557280e+07  7.784186e+00  4.880675e+00  2.482554e+00 
+          DFA           PPE 
+ 2.152583e+00  5.108613e+00 
+
+
+
+> vif(fit_motor)
+
+          age           sex     test_time   total_UPDRS     Jitter...   Jitter.Abs. 
+ 1.461082e+00  1.449524e+00  1.051763e+00  1.441349e+00  7.739586e+01  9.930288e+00 
+   Jitter.RAP   Jitter.PPQ5    Jitter.DDP       Shimmer   Shimmer.dB.  Shimmer.APQ3 
+ 8.661333e+05  3.236845e+01  8.663565e+05  1.980942e+02  4.670902e+01  1.557270e+07 
+ Shimmer.APQ5 Shimmer.APQ11   Shimmer.DDA           NHR           HNR          RPDE 
+ 6.263237e+01  3.083490e+01  1.557300e+07  7.792720e+00  4.891809e+00  2.474433e+00 
+          DFA           PPE 
+ 2.150136e+00  5.129983e+00 
+
+
+
+Stepwise
+
+fitStep_total=step(fit_total)
+total_UPDRS ~ age + sex + test_time + motor_UPDRS + Jitter... + 
+    Jitter.PPQ5 + Jitter.DDP + Shimmer + Shimmer.dB. + Shimmer.APQ5 + 
+    Shimmer.DDA + NHR + HNR + RPDE + DFA + PPE
+
+> mean(fitStep_total$residuals^2)
+[1] 5.129043
+
+
+fitStep_motor=step(fit_motor)
+motor_UPDRS ~ age + sex + test_time + total_UPDRS + Jitter... + 
+    Jitter.Abs. + Jitter.PPQ5 + Jitter.DDP + Shimmer + Shimmer.dB. + 
+    Shimmer.APQ5 + Shimmer.DDA + HNR + RPDE + DFA + PPE
+
+> mean(fitStep_motor$residuals^2)
+[1] 3.368976
+
+
+Log transformation of output variables
+
+> log_fit_total=lm(log(total_UPDRS) ~ . , data=Train_parkinsons)
+> mean(log_fit_total$residuals^2)
+[1] 0.02336546
+
+> log_fit_motor=lm(log(motor_UPDRS) ~ . , data=Train_parkinsons)
+> mean(log_fit_motor$residuals^2)
+[1] 0.02077965
+
+
+
+Lasso Regression
+(for total_UPDRS)
+> mean((lasso.pred-y)^2)
+[1] 5.183055
+
+
+Lasso after log transformation 
+(for log(total_UPDRS))
+> mean((lasso.pred-y)^2)
+[1] 0.02453692
+
+> lasso.coef
+  (Intercept)           age           sex     test_time   motor_UPDRS     Jitter... 
+ 1.948431e+00  0.000000e+00  0.000000e+00  8.106608e-05  4.887057e-02  0.000000e+00 
+  Jitter.Abs.    Jitter.RAP   Jitter.PPQ5    Jitter.DDP       Shimmer   Shimmer.dB. 
+ 0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00 
+ Shimmer.APQ3  Shimmer.APQ5 Shimmer.APQ11   Shimmer.DDA           NHR           HNR 
+ 0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00 -1.319467e-04 
+         RPDE           DFA 
+ 5.291373e-01  0.000000e+00 
+
+(for motor_UPDRS)
+> mean((lasso.pred-y)^2)
+[1] 3.406336
+
+Lasso (for log(motor_UPDRS))
+> mean((lasso.pred-y)^2)
+[1] 0.02183202
+
+> lasso.coef
+  (Intercept)           age           sex     test_time   total_UPDRS     Jitter... 
+  1.964162073  -0.003169826   0.077101708   0.000000000   0.042722167   0.000000000 
+  Jitter.Abs.    Jitter.RAP   Jitter.PPQ5    Jitter.DDP       Shimmer   Shimmer.dB. 
+  0.000000000   0.000000000   0.000000000   0.000000000   0.000000000   0.000000000 
+ Shimmer.APQ3  Shimmer.APQ5 Shimmer.APQ11   Shimmer.DDA           NHR           HNR 
+ -0.250130728   0.000000000   0.000000000   0.000000000   0.000000000   0.000000000 
+         RPDE           DFA 
+  0.000000000  -0.040741097
+
+
+Random Forest
+> mean((yhat.rf-Train_parkinsons$total_UPDRS)^2)
+[1] 0.1593626
+
+Random Forest after transformation
+> mean((yhat.rf-log(Train_parkinsons$total_UPDRS))^2)
+[1] 0.0002410995
+
+
+
+print(rf.random)
+Call:
+ randomForest(formula = log(total_UPDRS) ~ ., data = Train_parkinsons,      mtry = 18, importance = TRUE) 
+               Type of random forest: regression
+                     Number of trees: 500
+No. of variables tried at each split: 18
+
+          Mean of squared residuals: 0.0002410995
+                    % Var explained: 99.87
+
+
+> print(importance(rf.random,type = 2))
+              IncNodePurity
+age             17.94569136
+sex              5.06439674
+test_time        9.31869501
+motor_UPDRS    498.73175997
+Jitter...        0.05849782
+Jitter.Abs.      1.05382073
+Jitter.RAP       0.03748223
+Jitter.PPQ5      0.05722920
+Jitter.DDP       0.03269340
+Shimmer          0.08902479
+Shimmer.dB.      0.05408319
+Shimmer.APQ3     0.10214812
+Shimmer.APQ5     0.36608830
+Shimmer.APQ11    1.13859983
+Shimmer.DDA      0.10243495
+NHR              0.06950989
+HNR              0.46948878
+RPDE             1.90777938
+DFA              3.77675914
+PPE              0.32307629
+=====================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Obtaining Dataset
+Average UPDS column added.
+3000 rows taken for training model.
+Parkinsons_dataset_train <- read.csv("~/Parkinsons_dataset_train.csv", header=T)
+Parkinsons_dataset_train$subject.=NULL
+Parkinsons_dataset_train$motor_UPDRS=NULL
+Parkinsons_dataset_train$total_UPDRS=NULL
+
+Lm on all variables RMSE
+fit = lm(Avg_UPDRS ~., Parkinsons_dataset_train)
+summary(fit)
+> summary(fit)
+
+Call:
+lm(formula = Avg_UPDRS ~ ., data = Parkinsons_dataset_train)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-21.8878  -5.2584  -0.5923   5.6918  18.5428 
+
+Coefficients:
+                Estimate Std. Error t value Pr(>|t|)    
+(Intercept)    3.412e+01  3.773e+00   9.042  < 2e-16 ***
+age            4.021e-01  2.313e-02  17.383  < 2e-16 ***
+sex           -2.595e+00  3.953e-01  -6.564 6.15e-11 ***
+test_time      2.522e-02  2.564e-03   9.836  < 2e-16 ***
+Jitter...      3.818e+02  2.695e+02   1.417 0.156712    
+Jitter.Abs.   -8.765e+04  1.265e+04  -6.930 5.13e-12 ***
+Jitter.RAP    -6.327e+04  4.921e+04  -1.286 0.198650    
+Jitter.PPQ5   -8.912e+02  3.159e+02  -2.821 0.004818 ** 
+Jitter.DDP     2.151e+04  1.641e+04   1.311 0.189972    
+Shimmer       -4.782e+02  1.008e+02  -4.743 2.21e-06 ***
+Shimmer.dB.    1.868e+01  5.454e+00   3.426 0.000621 ***
+Shimmer.APQ3  -6.465e+03  4.969e+04  -0.130 0.896507    
+Shimmer.APQ5   4.987e+02  9.239e+01   5.398 7.29e-08 ***
+Shimmer.APQ11 -1.125e+02  5.646e+01  -1.992 0.046455 *  
+Shimmer.DDA    2.209e+03  1.656e+04   0.133 0.893940    
+NHR           -5.889e+01  1.137e+01  -5.179 2.38e-07 ***
+HNR           -3.746e-01  8.026e-02  -4.667 3.19e-06 ***
+RPDE          -5.056e+00  2.107e+00  -2.399 0.016501 *  
+DFA           -5.004e+01  2.667e+00 -18.758  < 2e-16 ***
+PPE            2.993e+01  3.537e+00   8.462  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.316 on 2979 degrees of freedom
+Multiple R-squared:  0.2903,	Adjusted R-squared:  0.2858 
+F-statistic: 64.15 on 19 and 2979 DF,  p-value: < 2.2e-16
+
+RMSE
+> mean(fit$residuals^2)
+[1] 53.17119
+
+Stepwise
+
+fit_Reduced=step(fit)
+
+Avg_UPDRS ~ age + sex + test_time + Jitter.Abs. + Jitter.PPQ5 + 
+    Jitter.DDP + Shimmer + Shimmer.dB. + Shimmer.APQ5 + Shimmer.APQ11 + 
+    NHR + HNR + RPDE + DFA + PPE
+
+                Df Sum of Sq    RSS   AIC
+<none>                       159719 11953
+- RPDE           1     341.4 160060 11958
+- Shimmer.APQ11  1     473.2 160192 11960
+- Jitter.PPQ5    1     536.7 160256 11962
+- Shimmer.dB.    1     679.1 160398 11964
+- HNR            1    1311.5 161030 11976
+- NHR            1    1592.8 161312 11981
+- Shimmer        1    1734.8 161454 11984
+- Shimmer.APQ5   1    2011.6 161730 11989
+- Jitter.DDP     1    2269.8 161989 11994
+- sex            1    2371.9 162091 11996
+- Jitter.Abs.    1    2396.3 162115 11996
+- PPE            1    4180.2 163899 12029
+- test_time      1    5273.2 164992 12049
+- age            1   16032.3 175751 12238
+- DFA            1   19584.0 179303 12298
+
+> mean(fit_Reduced$residuals^2)
+[1] 53.25738
+> summary(fit_Reduced)
+
+Call:
+lm(formula = Avg_UPDRS ~ age + sex + test_time + Jitter.Abs. + 
+    Jitter.PPQ5 + Jitter.DDP + Shimmer + Shimmer.dB. + Shimmer.APQ5 + 
+    Shimmer.APQ11 + NHR + HNR + RPDE + DFA + PPE, data = Parkinsons_dataset_train)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-22.0519  -5.2865  -0.6542   5.6951  18.2547 
+
+Coefficients:
+                Estimate Std. Error t value Pr(>|t|)    
+(Intercept)    3.522e+01  3.680e+00   9.571  < 2e-16 ***
+age            3.978e-01  2.299e-02  17.304  < 2e-16 ***
+sex           -2.626e+00  3.946e-01  -6.656 3.34e-11 ***
+test_time      2.541e-02  2.561e-03   9.924  < 2e-16 ***
+Jitter.Abs.   -8.044e+04  1.202e+04  -6.690 2.66e-11 ***
+Jitter.PPQ5   -9.015e+02  2.847e+02  -3.166 0.001561 ** 
+Jitter.DDP     5.884e+02  9.037e+01   6.511 8.73e-11 ***
+Shimmer       -3.832e+02  6.732e+01  -5.692 1.38e-08 ***
+Shimmer.dB.    1.931e+01  5.421e+00   3.561 0.000375 ***
+Shimmer.APQ5   5.202e+02  8.486e+01   6.129 9.98e-10 ***
+Shimmer.APQ11 -1.409e+02  4.739e+01  -2.973 0.002976 ** 
+NHR           -5.935e+01  1.088e+01  -5.454 5.32e-08 ***
+HNR           -3.894e-01  7.867e-02  -4.949 7.87e-07 ***
+RPDE          -5.212e+00  2.064e+00  -2.525 0.011614 *  
+DFA           -5.053e+01  2.642e+00 -19.125  < 2e-16 ***
+PPE            3.058e+01  3.461e+00   8.836  < 2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 7.317 on 2983 degrees of freedom
+Multiple R-squared:  0.2892,	Adjusted R-squared:  0.2856 
+F-statistic: 80.91 on 15 and 2983 DF,  p-value: < 2.2e-16
+
+
+Log transformation of output variable
+
+log_fit=lm(log(Avg_UPDRS) ~ . , data=Parkinsons_dataset_train)
+> mean(log_fit$residuals^2)
+[1] 0.1363978
+
+
+
+
+
+
+
+> summary(log_fit)
+
+Call:
+lm(formula = log(Avg_UPDRS) ~ ., data = Parkinsons_dataset_train)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-1.4385 -0.2078  0.0258  0.2818  0.7611 
+
+Coefficients:
+                Estimate Std. Error t value Pr(>|t|)    
+(Intercept)    3.674e+00  1.911e-01  19.225  < 2e-16 ***
+age            1.588e-02  1.172e-03  13.557  < 2e-16 ***
+sex           -5.211e-02  2.002e-02  -2.603  0.00929 ** 
+test_time      1.277e-03  1.299e-04   9.829  < 2e-16 ***
+Jitter...      2.350e+01  1.365e+01   1.722  0.08517 .  
+Jitter.Abs.   -3.452e+03  6.405e+02  -5.389 7.63e-08 ***
+Jitter.RAP    -3.332e+03  2.492e+03  -1.337  0.18137    
+Jitter.PPQ5   -2.933e+01  1.600e+01  -1.833  0.06685 .  
+Jitter.DDP     1.123e+03  8.309e+02   1.352  0.17650    
+Shimmer       -2.564e+01  5.106e+00  -5.021 5.44e-07 ***
+Shimmer.dB.    8.749e-01  2.762e-01   3.167  0.00155 ** 
+Shimmer.APQ3  -1.951e+03  2.517e+03  -0.775  0.43842    
+Shimmer.APQ5   2.233e+01  4.679e+00   4.772 1.91e-06 ***
+Shimmer.APQ11 -3.970e+00  2.860e+00  -1.388  0.16514    
+Shimmer.DDA    6.539e+02  8.390e+02   0.779  0.43580    
+NHR           -2.961e+00  5.759e-01  -5.143 2.88e-07 ***
+HNR           -1.985e-02  4.065e-03  -4.883 1.10e-06 ***
+RPDE           1.163e-01  1.067e-01   1.090  0.27596    
+DFA           -2.427e+00  1.351e-01 -17.966  < 2e-16 ***
+PPE            1.340e+00  1.791e-01   7.479 9.77e-14 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.3706 on 2979 degrees of freedom
+Multiple R-squared:  0.2522,	Adjusted R-squared:  0.2475 
+F-statistic: 52.89 on 19 and 2979 DF,  p-value: < 2.2e-16
+
+
+
+Dataset with log values
+> fit_ln = lm(Log.Avg_UPDRS. ~., Parkinsons_log_train)
+> mean(fit_ln$residuals^2)
+[1] 0.02572623
+
+
+
+
