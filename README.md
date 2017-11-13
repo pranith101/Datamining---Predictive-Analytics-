@@ -8,4 +8,4 @@ Number of variables and instances: 26 variables and 5875 instances.
 
 Where did we get the dataset from: UCI Repository- https://archive.ics.uci.edu/ml/datasets/Parkinsons+Telemonitoring
 
-Software used to buld models : R
+Software used to build models : R
